@@ -382,20 +382,29 @@ hr {
 }
 '''])
 
-# Global state to store game data
+# Global state to store game data - now organized by city
 game_state = {
-    'questions': [],
-    'answers': {},  # {participant_name: {question_id: answer}}
-    'guesses': {},  # {guesser_name: {question_id: {answer_id: guessed_name}}}
-    'participants': set(),
-    'phase': 'setup',  # setup, answer, game, results
+    'cities': {},  # {city_name: {questions, answers, guesses, participants, phase}}
     'admin_password': 'condaclaus2024'
 }
+
+# Helper function to get or create city data
+def get_city_data(city_name):
+    if city_name not in game_state['cities']:
+        game_state['cities'][city_name] = {
+            'questions': [],
+            'answers': {},  # {participant_name: {question_id: answer}}
+            'guesses': {},  # {guesser_name: {question_id: {answer_id: guessed_name}}}
+            'participants': set(),
+            'phase': 'setup'  # setup, answer, game, results
+        }
+    return game_state['cities'][city_name]
 
 # Session state to track logged-in user (per browser session)
 if 'user_session' not in pn.state.cache:
     pn.state.cache['user_session'] = {
         'username': None,
+        'city': None,
         'is_admin': False,
         'logged_in': False
     }
@@ -423,26 +432,58 @@ def create_login_view():
     participant_section = pn.Column(sizing_mode='stretch_width')
     participant_section.append(pn.pane.Markdown("## 🎁 Join as Participant", sizing_mode='stretch_width'))
 
+    # Get list of available cities
+    available_cities = list(game_state['cities'].keys())
+
     name_input = pn.widgets.TextInput(
         name='',
         placeholder='Enter your name',
         width=400
     )
 
+    city_select = pn.widgets.Select(
+        name='',
+        options=['-- Select City --'] + available_cities if available_cities else ['-- No cities available --'],
+        value='-- Select City --' if available_cities else '-- No cities available --',
+        width=400,
+        disabled=len(available_cities) == 0
+    )
+
     name_label = pn.pane.Markdown("**Your Name:**", sizing_mode='stretch_width')
+    city_label = pn.pane.Markdown("**Your City/Office:**", sizing_mode='stretch_width')
+
+    if not available_cities:
+        no_cities_msg = pn.pane.Markdown(
+            "*⚠️ No cities available yet. An admin needs to create a city first.*",
+            sizing_mode='stretch_width',
+            styles={'color': '#FF9500'}
+        )
+    else:
+        no_cities_msg = pn.Spacer(height=0)
 
     def participant_login(event):
         username = name_input.value.strip()
+        selected_city = city_select.value
+
         if not username:
             pn.state.notifications.error('❌ Please enter your name!', duration=3000)
             return
 
+        if not available_cities:
+            pn.state.notifications.error('❌ No cities available! Contact an admin.', duration=4000)
+            return
+
+        if selected_city.startswith('--'):
+            pn.state.notifications.error('❌ Please select your city!', duration=3000)
+            return
+
         pn.state.cache['user_session'] = {
             'username': username,
+            'city': selected_city,
             'is_admin': False,
             'logged_in': True
         }
-        pn.state.notifications.success(f'🎉 Welcome, {username}!', duration=3000)
+        pn.state.notifications.success(f'🎉 Welcome, {username} from {selected_city}!', duration=3000)
         # Force a refresh to show the main app
         pn.state.location.reload = True
 
@@ -453,8 +494,13 @@ def create_login_view():
     )
     participant_btn.on_click(participant_login)
 
+    participant_section.append(no_cities_msg)
+    participant_section.append(pn.Spacer(height=12))
     participant_section.append(name_label)
     participant_section.append(name_input)
+    participant_section.append(pn.Spacer(height=12))
+    participant_section.append(city_label)
+    participant_section.append(city_select)
     participant_section.append(pn.Spacer(height=16))
     participant_section.append(participant_btn)
 
@@ -476,8 +522,33 @@ def create_login_view():
         width=400
     )
 
+    # City options for admin
+    admin_city_options = ['-- Create New City --'] + available_cities if available_cities else ['-- Create New City --']
+    admin_city_select = pn.widgets.Select(
+        name='',
+        options=admin_city_options,
+        value='-- Create New City --',
+        width=400
+    )
+
+    new_city_input = pn.widgets.TextInput(
+        name='',
+        placeholder='Enter new city name (e.g., San Francisco)',
+        width=400,
+        visible=True
+    )
+
+    def on_admin_city_change(event):
+        if admin_city_select.value == '-- Create New City --':
+            new_city_input.visible = True
+        else:
+            new_city_input.visible = False
+
+    admin_city_select.param.watch(on_admin_city_change, 'value')
+
     admin_name_label = pn.pane.Markdown("**Admin Name:**", sizing_mode='stretch_width')
     admin_password_label = pn.pane.Markdown("**Password:**", sizing_mode='stretch_width')
+    admin_city_label = pn.pane.Markdown("**City/Office:**", sizing_mode='stretch_width')
 
     def admin_login(event):
         username = admin_name_input.value.strip()
@@ -491,12 +562,25 @@ def create_login_view():
             pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
             return
 
+        # Determine city
+        if admin_city_select.value == '-- Create New City --':
+            city_name = new_city_input.value.strip()
+            if not city_name:
+                pn.state.notifications.error('❌ Please enter a city name!', duration=3000)
+                return
+            # Create new city
+            get_city_data(city_name)
+            pn.state.notifications.info(f'🏙️ Created new city: {city_name}', duration=3000)
+        else:
+            city_name = admin_city_select.value
+
         pn.state.cache['user_session'] = {
             'username': username,
+            'city': city_name,
             'is_admin': True,
             'logged_in': True
         }
-        pn.state.notifications.success(f'🎉 Welcome Admin {username}!', duration=3000)
+        pn.state.notifications.success(f'🎉 Welcome Admin {username} ({city_name})!', duration=3000)
         # Force a refresh to show the main app
         pn.state.location.reload = True
 
@@ -512,6 +596,11 @@ def create_login_view():
     admin_section.append(pn.Spacer(height=12))
     admin_section.append(admin_password_label)
     admin_section.append(admin_password_input)
+    admin_section.append(pn.Spacer(height=12))
+    admin_section.append(admin_city_label)
+    admin_section.append(admin_city_select)
+    admin_section.append(pn.Spacer(height=8))
+    admin_section.append(new_city_input)
     admin_section.append(pn.Spacer(height=16))
     admin_section.append(admin_btn)
 
@@ -532,7 +621,10 @@ def create_login_view():
 
 def create_setup_view():
     """Admin view to set up questions"""
-    title = pn.pane.Markdown("# 🎄 CondaCarol - Setup Questions", sizing_mode='stretch_width', css_classes=['christmas-header'])
+    city = pn.state.cache['user_session']['city']
+    city_data = get_city_data(city)
+
+    title = pn.pane.Markdown(f"# 🎄 Setup Questions - {city}", sizing_mode='stretch_width', css_classes=['christmas-header'])
     instructions = pn.pane.Markdown("""
     **Admin Setup**: Add questions for participants to answer.
     These should be fun, personal questions that help everyone learn about each other!
@@ -559,9 +651,9 @@ def create_setup_view():
     )
 
     def update_questions_display():
-        if game_state['questions']:
+        if city_data['questions']:
             questions_text = '\n\n'.join([
-                f"{i+1}. {q}" for i, q in enumerate(game_state['questions'])
+                f"{i+1}. {q}" for i, q in enumerate(city_data['questions'])
             ])
         else:
             questions_text = 'No questions added yet.'
@@ -569,25 +661,25 @@ def create_setup_view():
 
     def add_question(event):
         if question_input.value.strip():
-            game_state['questions'].append(question_input.value.strip())
-            pn.state.notifications.success(f'✅ Question added! Total: {len(game_state["questions"])}', duration=3000)
+            city_data['questions'].append(question_input.value.strip())
+            pn.state.notifications.success(f'✅ Question added! Total: {len(city_data["questions"])}', duration=3000)
             question_input.value = ''
             update_questions_display()
         else:
             pn.state.notifications.warning('⚠️ Please enter a question.', duration=3000)
 
     def clear_questions(event):
-        game_state['questions'] = []
-        game_state['answers'] = {}
+        city_data['questions'] = []
+        city_data['answers'] = {}
         pn.state.notifications.info('🗑️ All questions cleared!', duration=3000)
         update_questions_display()
 
     def start_answer_phase(event):
-        if len(game_state['questions']) < 3:
+        if len(city_data['questions']) < 3:
             pn.state.notifications.error('❌ Please add at least 3 questions!', duration=3000)
             return
 
-        game_state['phase'] = 'answer'
+        city_data['phase'] = 'answer'
         pn.state.notifications.success(
             '🎉 Answer phase started! Tell participants to go to the "Answer" tab and click "Refresh Questions".',
             duration=8000
@@ -620,6 +712,8 @@ def create_setup_view():
 
 def create_answer_view():
     """Participant view to answer questions"""
+    city = pn.state.cache['user_session']['city']
+    city_data = get_city_data(city)
     username = pn.state.cache['user_session']['username']
 
     title = pn.pane.Markdown(f"# 🎁 {username}'s Answers", sizing_mode='stretch_width')
@@ -643,15 +737,15 @@ def create_answer_view():
         answer_widgets.clear()
         answers_column.clear()
 
-        if not game_state['questions']:
+        if not city_data['questions']:
             answers_column.append(pn.pane.Markdown('*⏳ Waiting for admin to add questions...*'))
             status_message.object = "**📢 No questions yet.** The admin needs to add questions in the Setup tab first."
             return
 
         # Show status message
-        status_message.object = f"**✅ {len(game_state['questions'])} questions loaded!** Fill out your answers below."
+        status_message.object = f"**✅ {len(city_data['questions'])} questions loaded!** Fill out your answers below."
 
-        for i, question in enumerate(game_state['questions']):
+        for i, question in enumerate(city_data['questions']):
             # Add question label separately for better styling
             question_label = pn.pane.Markdown(
                 f"**Question {i+1}:** {question}",
@@ -673,7 +767,7 @@ def create_answer_view():
     def submit_answers(event):
         participant_name = username
 
-        if participant_name in game_state['answers']:
+        if participant_name in city_data['answers']:
             pn.state.notifications.warning('⚠️ You have already submitted answers!', duration=3000)
             return
 
@@ -688,8 +782,8 @@ def create_answer_view():
                 return
             answers[i] = widget.value.strip()
 
-        game_state['answers'][participant_name] = answers
-        game_state['participants'].add(participant_name)
+        city_data['answers'][participant_name] = answers
+        city_data['participants'].add(participant_name)
         pn.state.notifications.success(f'🎉 Thanks {participant_name}! Your answers have been submitted.', duration=5000)
 
         # Clear answers for re-submission if needed
@@ -703,7 +797,7 @@ def create_answer_view():
     refresh_btn.on_click(update_answer_form)
 
     participants_info = pn.pane.Markdown(
-        f"**👥 Participants**: {len(game_state['participants'])} people have submitted answers",
+        f"**👥 Participants**: {len(city_data['participants'])} people have submitted answers",
         sizing_mode='stretch_width'
     )
 
@@ -730,6 +824,8 @@ def create_answer_view():
 
 def create_game_view():
     """Game view where participants guess who said what"""
+    city = pn.state.cache['user_session']['city']
+    city_data = get_city_data(city)
     username = pn.state.cache['user_session']['username']
 
     title = pn.pane.Markdown(f"# 🎅 {username}'s Guesses", sizing_mode='stretch_width')
@@ -753,7 +849,7 @@ def create_game_view():
 
         # Get all answers for this question
         answers_for_question = []
-        for participant, answers in game_state['answers'].items():
+        for participant, answers in city_data['answers'].items():
             if q_idx in answers:
                 answers_for_question.append({
                     'participant': participant,
@@ -764,7 +860,7 @@ def create_game_view():
             section.append(pn.pane.Markdown('*No answers for this question*'))
             return section
 
-        participant_list = sorted(list(game_state['participants']))
+        participant_list = sorted(list(city_data['participants']))
 
         # Create matching interface for this question
         instructions_md = pn.pane.Markdown(
@@ -820,12 +916,12 @@ def create_game_view():
         guesses_column.clear()
         all_guess_widgets.clear()
 
-        if not game_state['answers']:
+        if not city_data['answers']:
             guesses_column.append(pn.pane.Markdown('*⏳ No answers submitted yet...*'))
             return
 
         # Create sections for each question
-        for q_idx, question in enumerate(game_state['questions']):
+        for q_idx, question in enumerate(city_data['questions']):
             section = create_question_section(q_idx, question)
             guesses_column.append(section)
             guesses_column.append(pn.layout.Divider())
@@ -865,11 +961,11 @@ def create_game_view():
             return
 
         # Store guesses
-        if guesser_name not in game_state['guesses']:
-            game_state['guesses'][guesser_name] = {}
+        if guesser_name not in city_data['guesses']:
+            city_data['guesses'][guesser_name] = {}
 
         for key, data in all_guess_widgets.items():
-            game_state['guesses'][guesser_name][key] = {
+            city_data['guesses'][guesser_name][key] = {
                 'guessed': data['widget'].value,
                 'correct': data['correct_answer']
             }
@@ -906,6 +1002,8 @@ def create_game_view():
 
 def create_results_view():
     """Results view showing scores and correct answers"""
+    city = pn.state.cache['user_session']['city']
+    city_data = get_city_data(city)
     title = pn.pane.Markdown("# 🎉 CondaCarol - Results!", sizing_mode='stretch_width')
 
     results_column = pn.Column(sizing_mode='stretch_width')
@@ -913,12 +1011,12 @@ def create_results_view():
     def update_results(event=None):
         results_column.clear()
 
-        if not game_state['guesses']:
+        if not city_data['guesses']:
             results_column.append(pn.pane.Markdown('*⏳ No guesses to show yet...*'))
             return
 
         scores = {}
-        for guesser, guesses in game_state['guesses'].items():
+        for guesser, guesses in city_data['guesses'].items():
             correct_count = 0
             total_count = len(guesses)
 
@@ -945,10 +1043,10 @@ def create_results_view():
         results_column.append(pn.pane.Markdown("## 🎁 All Answers Revealed"))
         results_column.append(pn.Spacer(height=16))
 
-        for q_idx, question in enumerate(game_state['questions']):
+        for q_idx, question in enumerate(city_data['questions']):
             results_column.append(pn.pane.Markdown(f"### Question {q_idx+1}: {question}"))
 
-            for participant, answers in sorted(game_state['answers'].items()):
+            for participant, answers in sorted(city_data['answers'].items()):
                 if q_idx in answers:
                     results_column.append(pn.pane.Markdown(f"- **{participant}**: *\"{answers[q_idx]}\"*"))
 
@@ -1016,10 +1114,14 @@ def create_app():
         sizing_mode='stretch_width'
     )
 
+    city = session['city']
+    city_data = get_city_data(city)
+
     phase_info = pn.pane.Markdown(
-        f"**Current Phase:** `{game_state['phase'].title()}` | "
-        f"**👥 Participants:** `{len(game_state['participants'])}` | "
-        f"**❓ Questions:** `{len(game_state['questions'])}`",
+        f"**🏙️ City:** `{city}` | "
+        f"**Current Phase:** `{city_data['phase'].title()}` | "
+        f"**👥 Participants:** `{len(city_data['participants'])}` | "
+        f"**❓ Questions:** `{len(city_data['questions'])}`",
         sizing_mode='stretch_width',
         styles={'text-align': 'center', 'margin-bottom': '24px'},
         css_classes=['phase-indicator']
