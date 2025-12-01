@@ -1,0 +1,29 @@
+# Conda
+*.egg-info/
+dist/
+build/
+*.pyc
+__pycache__/
+
+# Environment
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Panel
+.panel-cache/
+
+# Data
+*.db
+*.sqlite
+data/
