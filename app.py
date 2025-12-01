@@ -213,12 +213,32 @@ input[type="radio"] {
   margin-bottom: 24px !important;
 }
 
-/* Labels - Comprehensive */
+/* Labels - Comprehensive - Positioned ABOVE inputs */
 label, .bk-label, .bk-input-label, legend {
   color: var(--color-text) !important;
   font-weight: 500 !important;
   margin-bottom: 8px !important;
+  margin-top: 0 !important;
   background: transparent !important;
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+}
+
+/* Ensure labels are above their inputs, not overlapping */
+.bk-input-group > label,
+.bk-input-container > label {
+  display: block !important;
+  margin-bottom: 8px !important;
+  position: static !important;
+}
+
+/* Input wrapper positioning */
+.bk-input-group,
+.bk-input-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
 }
 
 /* Widget containers */
@@ -449,7 +469,10 @@ def create_setup_view():
             return
 
         game_state['phase'] = 'answer'
-        pn.state.notifications.success('🎉 Answer phase started! Share the link with participants.', duration=5000)
+        pn.state.notifications.success(
+            '🎉 Answer phase started! Tell participants to go to the "Answer" tab and click "Refresh Questions".',
+            duration=8000
+        )
 
     add_btn = pn.widgets.Button(name='➕ Add Question', button_type='primary', width=180)
     add_btn.on_click(add_question)
@@ -484,12 +507,20 @@ def create_answer_view():
     instructions = pn.pane.Markdown("""
     **Answer the questions below**. Your answers will be shared anonymously during the guessing game!
     Be creative and have fun with your responses!
+
+    **💡 Tip:** If questions don't appear, click the "Refresh Questions" button below.
     """, sizing_mode='stretch_width')
 
     name_input = pn.widgets.TextInput(
         name='Your Name',
         placeholder='Enter your name',
         width=300
+    )
+
+    status_message = pn.pane.Markdown(
+        "",
+        sizing_mode='stretch_width',
+        styles={'padding': '12px', 'background': 'rgba(67, 176, 42, 0.1)', 'border-radius': '6px', 'border': '1px solid #43B02A'}
     )
 
     answers_column = pn.Column(sizing_mode='stretch_width')
@@ -501,18 +532,30 @@ def create_answer_view():
 
         if not game_state['questions']:
             answers_column.append(pn.pane.Markdown('*⏳ Waiting for admin to add questions...*'))
+            status_message.object = "**📢 No questions yet.** The admin needs to add questions in the Setup tab first."
             return
 
+        # Show status message
+        status_message.object = f"**✅ {len(game_state['questions'])} questions loaded!** Fill out your answers below."
+
         for i, question in enumerate(game_state['questions']):
+            # Add question label separately for better styling
+            question_label = pn.pane.Markdown(
+                f"**Question {i+1}:** {question}",
+                sizing_mode='stretch_width',
+                styles={'margin-bottom': '8px', 'margin-top': '16px'}
+            )
+            answers_column.append(question_label)
+
             widget = pn.widgets.TextAreaInput(
-                name=f'Question {i+1}: {question}',
-                placeholder='Your answer...',
+                name='',  # Empty name since we have the label above
+                placeholder='Type your answer here...',
                 height=80,
                 width=600
             )
             answer_widgets.append(widget)
             answers_column.append(widget)
-            answers_column.append(pn.Spacer(height=16))
+            answers_column.append(pn.Spacer(height=8))
 
     def submit_answers(event):
         if not name_input.value.strip():
@@ -547,7 +590,7 @@ def create_answer_view():
     submit_btn = pn.widgets.Button(name='✅ Submit Answers', button_type='primary', width=200)
     submit_btn.on_click(submit_answers)
 
-    refresh_btn = pn.widgets.Button(name='🔄 Refresh Questions', button_type='default', width=200)
+    refresh_btn = pn.widgets.Button(name='🔄 Refresh Questions', button_type='success', width=250)
     refresh_btn.on_click(update_answer_form)
 
     participants_info = pn.pane.Markdown(
@@ -560,11 +603,14 @@ def create_answer_view():
     return pn.Column(
         title,
         instructions,
+        pn.Spacer(height=16),
+        pn.pane.Markdown("**👇 Click this button first to load questions:**", sizing_mode='stretch_width'),
+        refresh_btn,
+        pn.Spacer(height=16),
+        status_message,
         pn.Spacer(height=24),
         name_input,
         pn.Spacer(height=16),
-        refresh_btn,
-        pn.Spacer(height=24),
         answers_column,
         pn.Spacer(height=24),
         submit_btn,
@@ -580,7 +626,9 @@ def create_game_view():
     title = pn.pane.Markdown("# 🎅 CondaCarol - Guess Who!", sizing_mode='stretch_width')
     instructions = pn.pane.Markdown("""
     **Match each answer to the person who said it!**
-    Drag and drop or use the dropdowns to match. Each person can only be matched once per question.
+    Each person can only be matched once per question.
+
+    **💡 Tip:** Click "Refresh Game" button below to load the latest answers.
     """, sizing_mode='stretch_width')
 
     guesser_name_input = pn.widgets.TextInput(
@@ -633,9 +681,15 @@ def create_game_view():
                 sizing_mode='stretch_width'
             )
 
+            selection_label = pn.pane.Markdown(
+                "**Who said this?**",
+                sizing_mode='stretch_width',
+                styles={'margin-top': '12px', 'margin-bottom': '8px'}
+            )
+
             # Use RadioButtonGroup for better UX
             guess_select = pn.widgets.RadioButtonGroup(
-                name='Who said this?',
+                name='',  # Empty name - we have our own label above
                 options=participant_list,
                 button_type='default',
                 button_style='outline',
@@ -651,7 +705,7 @@ def create_game_view():
             }
 
             answer_card.append(answer_text)
-            answer_card.append(pn.Spacer(height=12))
+            answer_card.append(selection_label)
             answer_card.append(guess_select)
 
             section.append(answer_card)
@@ -731,7 +785,7 @@ def create_game_view():
     submit_guess_btn = pn.widgets.Button(name='✅ Submit All Guesses', button_type='primary', width=220)
     submit_guess_btn.on_click(submit_guesses)
 
-    refresh_btn = pn.widgets.Button(name='🔄 Refresh Game', button_type='default', width=200)
+    refresh_btn = pn.widgets.Button(name='🔄 Refresh Game', button_type='success', width=200)
     refresh_btn.on_click(update_game_form)
 
     # Initial load
@@ -740,11 +794,12 @@ def create_game_view():
     return pn.Column(
         title,
         instructions,
+        pn.Spacer(height=16),
+        pn.pane.Markdown("**👇 Click this button first to load answers:**", sizing_mode='stretch_width'),
+        refresh_btn,
         pn.Spacer(height=24),
         guesser_name_input,
         pn.Spacer(height=16),
-        refresh_btn,
-        pn.Spacer(height=24),
         guesses_column,
         pn.Spacer(height=24),
         submit_guess_btn,
