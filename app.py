@@ -5,6 +5,7 @@ Learn more about your colleagues through fun questions and guessing games!
 
 import panel as pn
 import json
+import database as db
 
 # Initialize Panel with custom CSS
 pn.extension(design='material', notifications=True, raw_css=['''
@@ -382,23 +383,152 @@ hr {
 }
 '''])
 
+# Initialize database (will fall back to in-memory if no DATABASE_URL)
+USE_DATABASE = db.init_database() is not None
+
 # Global state to store game data - now organized by city
+# Only used if database is not available (local development)
 game_state = {
     'cities': {},  # {city_name: {questions, answers, guesses, participants, phase}}
     'admin_password': 'condaclaus2024'
 }
 
-# Helper function to get or create city data
+# Data access layer - abstracts database and in-memory storage
+def get_or_create_city(city_name):
+    """Ensure city exists in storage"""
+    if USE_DATABASE:
+        db.create_city(city_name)
+    else:
+        if city_name not in game_state['cities']:
+            game_state['cities'][city_name] = {
+                'questions': [],
+                'answers': {},
+                'guesses': {},
+                'participants': set(),
+                'phase': 'setup'
+            }
+
+def get_all_cities():
+    """Get list of all cities"""
+    if USE_DATABASE:
+        return db.get_all_cities()
+    else:
+        return list(game_state['cities'].keys())
+
+def get_city_phase(city_name):
+    """Get current phase for a city"""
+    if USE_DATABASE:
+        return db.get_city_phase(city_name) or 'setup'
+    else:
+        return game_state['cities'].get(city_name, {}).get('phase', 'setup')
+
+def set_city_phase(city_name, phase):
+    """Set phase for a city"""
+    if USE_DATABASE:
+        db.set_city_phase(city_name, phase)
+    else:
+        if city_name in game_state['cities']:
+            game_state['cities'][city_name]['phase'] = phase
+
+def get_questions(city_name):
+    """Get questions for a city"""
+    if USE_DATABASE:
+        return db.get_questions(city_name)
+    else:
+        return game_state['cities'].get(city_name, {}).get('questions', [])
+
+def add_question(city_name, question_text):
+    """Add a question to a city"""
+    if USE_DATABASE:
+        current_questions = db.get_questions(city_name)
+        db.add_question(city_name, question_text, len(current_questions))
+    else:
+        if city_name in game_state['cities']:
+            game_state['cities'][city_name]['questions'].append(question_text)
+
+def clear_questions(city_name):
+    """Clear all questions for a city"""
+    if USE_DATABASE:
+        db.clear_questions(city_name)
+    else:
+        if city_name in game_state['cities']:
+            game_state['cities'][city_name]['questions'] = []
+            game_state['cities'][city_name]['answers'] = {}
+
+def get_participants(city_name):
+    """Get participants for a city"""
+    if USE_DATABASE:
+        return db.get_participants(city_name)
+    else:
+        return game_state['cities'].get(city_name, {}).get('participants', set())
+
+def add_participant(city_name, participant_name):
+    """Add a participant to a city"""
+    if USE_DATABASE:
+        db.add_participant(city_name, participant_name)
+    else:
+        if city_name in game_state['cities']:
+            game_state['cities'][city_name]['participants'].add(participant_name)
+
+def has_submitted_answers(city_name, participant_name):
+    """Check if participant has submitted answers"""
+    if USE_DATABASE:
+        return db.has_submitted_answers(city_name, participant_name)
+    else:
+        return participant_name in game_state['cities'].get(city_name, {}).get('answers', {})
+
+def save_answers(city_name, participant_name, answers_dict):
+    """Save answers for a participant"""
+    if USE_DATABASE:
+        for question_order, answer_text in answers_dict.items():
+            db.save_answer(city_name, participant_name, question_order, answer_text)
+        db.add_participant(city_name, participant_name)
+    else:
+        if city_name in game_state['cities']:
+            game_state['cities'][city_name]['answers'][participant_name] = answers_dict
+            game_state['cities'][city_name]['participants'].add(participant_name)
+
+def get_answers(city_name):
+    """Get all answers for a city"""
+    if USE_DATABASE:
+        return db.get_answers(city_name)
+    else:
+        return game_state['cities'].get(city_name, {}).get('answers', {})
+
+def save_guesses(city_name, guesser_name, guesses_dict):
+    """Save guesses for a participant"""
+    if USE_DATABASE:
+        for key, guess_data in guesses_dict.items():
+            # Parse key like "q0_a0" to extract question and answer indices
+            parts = key.split('_')
+            q_idx = int(parts[0][1:])
+            a_idx = parts[1][1:]
+            db.save_guess(city_name, guesser_name, q_idx, a_idx,
+                         guess_data['guessed'], guess_data['correct'])
+    else:
+        if city_name in game_state['cities']:
+            if guesser_name not in game_state['cities'][city_name]['guesses']:
+                game_state['cities'][city_name]['guesses'][guesser_name] = {}
+            game_state['cities'][city_name]['guesses'][guesser_name] = guesses_dict
+
+def get_guesses(city_name):
+    """Get all guesses for a city"""
+    if USE_DATABASE:
+        return db.get_guesses(city_name)
+    else:
+        return game_state['cities'].get(city_name, {}).get('guesses', {})
+
+# Legacy function for backwards compatibility
 def get_city_data(city_name):
-    if city_name not in game_state['cities']:
-        game_state['cities'][city_name] = {
-            'questions': [],
-            'answers': {},  # {participant_name: {question_id: answer}}
-            'guesses': {},  # {guesser_name: {question_id: {answer_id: guessed_name}}}
-            'participants': set(),
-            'phase': 'setup'  # setup, answer, game, results
-        }
-    return game_state['cities'][city_name]
+    """Get city data structure (for views that still use this pattern)"""
+    get_or_create_city(city_name)
+    return {
+        'questions': get_questions(city_name),
+        'answers': get_answers(city_name),
+        'guesses': get_guesses(city_name),
+        'participants': get_participants(city_name),
+        'phase': get_city_phase(city_name)
+    }
 
 # Session state to track logged-in user (per browser session)
 if 'user_session' not in pn.state.cache:
@@ -433,7 +563,7 @@ def create_login_view():
     participant_section.append(pn.pane.Markdown("## 🎁 Join as Participant", sizing_mode='stretch_width'))
 
     # Get list of available cities
-    available_cities = list(game_state['cities'].keys())
+    available_cities = get_all_cities()
 
     name_input = pn.widgets.TextInput(
         name='',
@@ -569,7 +699,7 @@ def create_login_view():
                 pn.state.notifications.error('❌ Please enter a city name!', duration=3000)
                 return
             # Create new city
-            get_city_data(city_name)
+            get_or_create_city(city_name)
             pn.state.notifications.info(f'🏙️ Created new city: {city_name}', duration=3000)
         else:
             city_name = admin_city_select.value
@@ -659,37 +789,38 @@ def create_setup_view():
             questions_text = 'No questions added yet.'
         questions_list.value = questions_text
 
-    def add_question(event):
+    def add_question_handler(event):
         if question_input.value.strip():
-            city_data['questions'].append(question_input.value.strip())
-            pn.state.notifications.success(f'✅ Question added! Total: {len(city_data["questions"])}', duration=3000)
+            add_question(city, question_input.value.strip())
+            questions = get_questions(city)
+            pn.state.notifications.success(f'✅ Question added! Total: {len(questions)}', duration=3000)
             question_input.value = ''
             update_questions_display()
         else:
             pn.state.notifications.warning('⚠️ Please enter a question.', duration=3000)
 
-    def clear_questions(event):
-        city_data['questions'] = []
-        city_data['answers'] = {}
+    def clear_questions_handler(event):
+        clear_questions(city)
         pn.state.notifications.info('🗑️ All questions cleared!', duration=3000)
         update_questions_display()
 
     def start_answer_phase(event):
-        if len(city_data['questions']) < 3:
+        questions = get_questions(city)
+        if len(questions) < 3:
             pn.state.notifications.error('❌ Please add at least 3 questions!', duration=3000)
             return
 
-        city_data['phase'] = 'answer'
+        set_city_phase(city, 'answer')
         pn.state.notifications.success(
             '🎉 Answer phase started! Tell participants to go to the "Answer" tab and click "Refresh Questions".',
             duration=8000
         )
 
     add_btn = pn.widgets.Button(name='➕ Add Question', button_type='primary', width=180)
-    add_btn.on_click(add_question)
+    add_btn.on_click(add_question_handler)
 
     clear_btn = pn.widgets.Button(name='🗑️ Clear All', button_type='danger', width=150)
-    clear_btn.on_click(clear_questions)
+    clear_btn.on_click(clear_questions_handler)
 
     start_btn = pn.widgets.Button(name='▶️ Start Answer Phase', button_type='success', width=220, css_classes=['christmas-accent'])
     start_btn.on_click(start_answer_phase)
@@ -767,7 +898,7 @@ def create_answer_view():
     def submit_answers(event):
         participant_name = username
 
-        if participant_name in city_data['answers']:
+        if has_submitted_answers(city, participant_name):
             pn.state.notifications.warning('⚠️ You have already submitted answers!', duration=3000)
             return
 
@@ -782,8 +913,7 @@ def create_answer_view():
                 return
             answers[i] = widget.value.strip()
 
-        city_data['answers'][participant_name] = answers
-        city_data['participants'].add(participant_name)
+        save_answers(city, participant_name, answers)
         pn.state.notifications.success(f'🎉 Thanks {participant_name}! Your answers have been submitted.', duration=5000)
 
         # Clear answers for re-submission if needed
@@ -961,14 +1091,14 @@ def create_game_view():
             return
 
         # Store guesses
-        if guesser_name not in city_data['guesses']:
-            city_data['guesses'][guesser_name] = {}
-
+        guesses_dict = {}
         for key, data in all_guess_widgets.items():
-            city_data['guesses'][guesser_name][key] = {
+            guesses_dict[key] = {
                 'guessed': data['widget'].value,
                 'correct': data['correct_answer']
             }
+
+        save_guesses(city, guesser_name, guesses_dict)
 
         pn.state.notifications.success(f'🎉 Thanks {guesser_name}! Your guesses have been submitted.', duration=5000)
 

@@ -6,3 +6,4 @@ dependencies:
   - panel
   - pandas
   - pyyaml
+  - psycopg2

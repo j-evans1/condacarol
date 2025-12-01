@@ -1,0 +1,11 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "panel serve app.py --address 0.0.0.0 --port $PORT --allow-websocket-origin=\"*\"",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100
+  }
+}
