@@ -6,8 +6,228 @@ Learn more about your colleagues through fun questions and guessing games!
 import panel as pn
 import json
 
-# Initialize Panel
-pn.extension(design='material', notifications=True)
+# Initialize Panel with custom CSS
+pn.extension(design='material', notifications=True, raw_css=['''
+:root {
+  --color-primary: #43B02A;
+  --color-bg: #0E1117;
+  --color-surface: #1A1F2E;
+  --color-surface-variant: #242938;
+  --color-text: #FFFFFF;
+  --color-text-muted: #8B92A7;
+  --color-border: #2A2F3D;
+  --color-warning: #FF9500;
+  --color-error: #FF3B30;
+  --spacing-unit: 8px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --transition-fast: 150ms cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+body {
+  background: var(--color-bg) !important;
+  color: var(--color-text) !important;
+  font-family: 'Inter Variable', system-ui, -apple-system, sans-serif !important;
+  background-image: radial-gradient(circle at 20% 30%, rgba(67, 176, 42, 0.03) 0%, transparent 50%) !important;
+}
+
+.bk-root {
+  background: transparent !important;
+}
+
+/* Card styling */
+.card {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 24px !important;
+  margin-bottom: 24px !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.card:hover {
+  border-color: rgba(67, 176, 42, 0.3) !important;
+}
+
+/* Button overrides */
+.bk-btn-primary {
+  background-color: var(--color-primary) !important;
+  border: none !important;
+  color: white !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.bk-btn-primary:hover {
+  filter: brightness(110%) !important;
+  transform: translateY(-1px) !important;
+}
+
+.bk-btn-success {
+  background-color: var(--color-primary) !important;
+  border: none !important;
+  color: white !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+}
+
+.bk-btn-danger {
+  background-color: var(--color-error) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.bk-btn-default {
+  background: transparent !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  border-radius: var(--radius-sm) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.bk-btn-default:hover {
+  border-color: var(--color-primary) !important;
+  background: rgba(67, 176, 42, 0.05) !important;
+}
+
+.bk-btn-warning {
+  background-color: var(--color-warning) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* Input fields */
+.bk-input, .bk-input-group input, textarea {
+  background: var(--color-surface-variant) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 12px !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.bk-input:focus, textarea:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(67, 176, 42, 0.1) !important;
+}
+
+/* Select dropdowns */
+select.bk-input {
+  background: var(--color-surface-variant) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* Labels */
+label, .bk-label {
+  color: var(--color-text) !important;
+  font-weight: 500 !important;
+  margin-bottom: 8px !important;
+}
+
+/* Tabs */
+.bk-tab {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-muted) !important;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important;
+  padding: 12px 24px !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.bk-tab.bk-active {
+  background: var(--color-bg) !important;
+  color: var(--color-primary) !important;
+  border-bottom-color: transparent !important;
+  font-weight: 600 !important;
+}
+
+.bk-tab:hover {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-text) !important;
+}
+
+/* Dividers */
+hr {
+  border-color: var(--color-border) !important;
+  margin: 32px 0 !important;
+}
+
+/* Markdown content */
+.markdown {
+  color: var(--color-text) !important;
+}
+
+.markdown h1, .markdown h2, .markdown h3 {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+.markdown h1 {
+  font-size: 32px !important;
+  margin-bottom: 24px !important;
+}
+
+.markdown h2 {
+  font-size: 24px !important;
+  margin-bottom: 16px !important;
+  margin-top: 32px !important;
+}
+
+.markdown h3 {
+  font-size: 20px !important;
+  margin-bottom: 12px !important;
+  margin-top: 24px !important;
+}
+
+.markdown p {
+  color: var(--color-text-muted) !important;
+  line-height: 1.6 !important;
+}
+
+.markdown strong {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+.markdown code {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-primary) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+}
+
+/* Notification positioning */
+.bk-notification {
+  border-radius: var(--radius-sm) !important;
+  padding: 16px !important;
+}
+
+/* Christmas theming accents */
+.christmas-accent {
+  background: linear-gradient(135deg, #43B02A 0%, #2d7a1c 100%) !important;
+}
+
+/* Phase indicator */
+.phase-indicator {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 16px 24px !important;
+  margin-bottom: 24px !important;
+}
+
+/* Emoji styling */
+.emoji {
+  font-size: 24px !important;
+}
+'''])
 
 # Global state to store game data
 game_state = {
@@ -22,28 +242,36 @@ game_state = {
 
 def create_setup_view():
     """Admin view to set up questions"""
-    title = pn.pane.Markdown("# 🎄 CondaCarol - Setup Questions 🎅", sizing_mode='stretch_width')
+    title = pn.pane.Markdown("# 🎄 CondaCarol - Setup Questions", sizing_mode='stretch_width', css_classes=['christmas-header'])
     instructions = pn.pane.Markdown("""
     **Admin Setup**: Add questions for participants to answer.
     These should be fun, personal questions that help everyone learn about each other!
+
+    Example questions:
+    - What's your most embarrassing childhood memory?
+    - If you could have dinner with anyone, who would it be?
+    - What's your hidden talent?
     """, sizing_mode='stretch_width')
 
     password_input = pn.widgets.PasswordInput(
         name='Admin Password',
-        placeholder='Enter admin password'
+        placeholder='Enter admin password',
+        width=300
     )
 
     question_input = pn.widgets.TextAreaInput(
-        name='Question',
+        name='New Question',
         placeholder='e.g., What was your favorite vacation destination?',
-        height=100
+        height=100,
+        width=600
     )
 
     questions_list = pn.widgets.TextAreaInput(
         name='Current Questions',
         value='No questions added yet.',
-        height=200,
-        disabled=True
+        height=250,
+        disabled=True,
+        width=600
     )
 
     def update_questions_display():
@@ -57,70 +285,78 @@ def create_setup_view():
 
     def add_question(event):
         if password_input.value != game_state['admin_password']:
-            pn.state.notifications.error('Incorrect admin password!', duration=3000)
+            pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
             return
 
         if question_input.value.strip():
             game_state['questions'].append(question_input.value.strip())
-            pn.state.notifications.success(f'Question added! Total: {len(game_state["questions"])}', duration=3000)
+            pn.state.notifications.success(f'✅ Question added! Total: {len(game_state["questions"])}', duration=3000)
             question_input.value = ''
             update_questions_display()
         else:
-            pn.state.notifications.warning('Please enter a question.', duration=3000)
+            pn.state.notifications.warning('⚠️ Please enter a question.', duration=3000)
 
     def clear_questions(event):
         if password_input.value != game_state['admin_password']:
-            pn.state.notifications.error('Incorrect admin password!', duration=3000)
+            pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
             return
 
         game_state['questions'] = []
         game_state['answers'] = {}
-        pn.state.notifications.info('All questions cleared!', duration=3000)
+        pn.state.notifications.info('🗑️ All questions cleared!', duration=3000)
         update_questions_display()
 
     def start_answer_phase(event):
         if password_input.value != game_state['admin_password']:
-            pn.state.notifications.error('Incorrect admin password!', duration=3000)
+            pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
             return
 
         if len(game_state['questions']) < 3:
-            pn.state.notifications.error('Please add at least 3 questions!', duration=3000)
+            pn.state.notifications.error('❌ Please add at least 3 questions!', duration=3000)
             return
 
         game_state['phase'] = 'answer'
-        pn.state.notifications.success('Answer phase started! Share the link with participants.', duration=5000)
+        pn.state.notifications.success('🎉 Answer phase started! Share the link with participants.', duration=5000)
 
-    add_btn = pn.widgets.Button(name='Add Question', button_type='primary', width=150)
+    add_btn = pn.widgets.Button(name='➕ Add Question', button_type='primary', width=180)
     add_btn.on_click(add_question)
 
-    clear_btn = pn.widgets.Button(name='Clear All Questions', button_type='danger', width=150)
+    clear_btn = pn.widgets.Button(name='🗑️ Clear All', button_type='danger', width=150)
     clear_btn.on_click(clear_questions)
 
-    start_btn = pn.widgets.Button(name='Start Answer Phase →', button_type='success', width=200)
+    start_btn = pn.widgets.Button(name='▶️ Start Answer Phase', button_type='success', width=220, css_classes=['christmas-accent'])
     start_btn.on_click(start_answer_phase)
 
     return pn.Column(
         title,
         instructions,
+        pn.Spacer(height=24),
         password_input,
+        pn.Spacer(height=16),
         question_input,
-        pn.Row(add_btn, clear_btn),
+        pn.Spacer(height=16),
+        pn.Row(add_btn, pn.Spacer(width=16), clear_btn),
+        pn.Spacer(height=24),
         questions_list,
+        pn.Spacer(height=24),
         start_btn,
-        sizing_mode='stretch_width'
+        sizing_mode='stretch_width',
+        css_classes=['card']
     )
 
 
 def create_answer_view():
     """Participant view to answer questions"""
-    title = pn.pane.Markdown("# 🎁 CondaCarol - Answer Questions 🎄", sizing_mode='stretch_width')
+    title = pn.pane.Markdown("# 🎁 CondaCarol - Answer Questions", sizing_mode='stretch_width')
     instructions = pn.pane.Markdown("""
     **Answer the questions below**. Your answers will be shared anonymously during the guessing game!
+    Be creative and have fun with your responses!
     """, sizing_mode='stretch_width')
 
     name_input = pn.widgets.TextInput(
         name='Your Name',
-        placeholder='Enter your name'
+        placeholder='Enter your name',
+        width=300
     )
 
     answers_column = pn.Column(sizing_mode='stretch_width')
@@ -131,81 +367,93 @@ def create_answer_view():
         answers_column.clear()
 
         if not game_state['questions']:
-            answers_column.append(pn.pane.Markdown('*Waiting for admin to add questions...*'))
+            answers_column.append(pn.pane.Markdown('*⏳ Waiting for admin to add questions...*'))
             return
 
         for i, question in enumerate(game_state['questions']):
             widget = pn.widgets.TextAreaInput(
-                name=f'Q{i+1}: {question}',
+                name=f'Question {i+1}: {question}',
                 placeholder='Your answer...',
-                height=80
+                height=80,
+                width=600
             )
             answer_widgets.append(widget)
             answers_column.append(widget)
+            answers_column.append(pn.Spacer(height=16))
 
     def submit_answers(event):
         if not name_input.value.strip():
-            pn.state.notifications.error('Please enter your name!', duration=3000)
+            pn.state.notifications.error('❌ Please enter your name!', duration=3000)
             return
 
         participant_name = name_input.value.strip()
 
         if participant_name in game_state['answers']:
-            pn.state.notifications.warning('You have already submitted answers!', duration=3000)
+            pn.state.notifications.warning('⚠️ You have already submitted answers!', duration=3000)
             return
 
         if not answer_widgets:
-            pn.state.notifications.error('No questions available yet!', duration=3000)
+            pn.state.notifications.error('❌ No questions available yet!', duration=3000)
             return
 
         answers = {}
         for i, widget in enumerate(answer_widgets):
             if not widget.value.strip():
-                pn.state.notifications.error(f'Please answer question {i+1}!', duration=3000)
+                pn.state.notifications.error(f'❌ Please answer question {i+1}!', duration=3000)
                 return
             answers[i] = widget.value.strip()
 
         game_state['answers'][participant_name] = answers
         game_state['participants'].add(participant_name)
-        pn.state.notifications.success(f'Thanks {participant_name}! Your answers have been submitted.', duration=5000)
+        pn.state.notifications.success(f'🎉 Thanks {participant_name}! Your answers have been submitted.', duration=5000)
 
         name_input.value = ''
         for widget in answer_widgets:
             widget.value = ''
 
-    submit_btn = pn.widgets.Button(name='Submit Answers', button_type='primary', width=150)
+    submit_btn = pn.widgets.Button(name='✅ Submit Answers', button_type='primary', width=200)
     submit_btn.on_click(submit_answers)
 
-    refresh_btn = pn.widgets.Button(name='Refresh Questions', button_type='default', width=150)
+    refresh_btn = pn.widgets.Button(name='🔄 Refresh Questions', button_type='default', width=200)
     refresh_btn.on_click(update_answer_form)
 
-    participants_text = pn.pane.Markdown(f"**Participants so far**: {len(game_state['participants'])}")
+    participants_info = pn.pane.Markdown(
+        f"**👥 Participants**: {len(game_state['participants'])} people have submitted answers",
+        sizing_mode='stretch_width'
+    )
 
     update_answer_form()
 
     return pn.Column(
         title,
         instructions,
+        pn.Spacer(height=24),
         name_input,
+        pn.Spacer(height=16),
         refresh_btn,
+        pn.Spacer(height=24),
         answers_column,
+        pn.Spacer(height=24),
         submit_btn,
         pn.layout.Divider(),
-        participants_text,
-        sizing_mode='stretch_width'
+        participants_info,
+        sizing_mode='stretch_width',
+        css_classes=['card']
     )
 
 
 def create_game_view():
     """Game view where participants guess who said what"""
-    title = pn.pane.Markdown("# 🎅 CondaCarol - Guess Who! 🎄", sizing_mode='stretch_width')
+    title = pn.pane.Markdown("# 🎅 CondaCarol - Guess Who!", sizing_mode='stretch_width')
     instructions = pn.pane.Markdown("""
-    **Read each answer and guess who wrote it!** Each correct guess earns you a point.
+    **Read each answer and guess who wrote it!**
+    Each correct guess earns you a point. Good luck!
     """, sizing_mode='stretch_width')
 
     guesser_name_input = pn.widgets.TextInput(
         name='Your Name',
-        placeholder='Enter your name to start guessing'
+        placeholder='Enter your name to start guessing',
+        width=300
     )
 
     guesses_column = pn.Column(sizing_mode='stretch_width')
@@ -216,13 +464,14 @@ def create_game_view():
         guess_widgets.clear()
 
         if not game_state['answers']:
-            guesses_column.append(pn.pane.Markdown('*No answers submitted yet...*'))
+            guesses_column.append(pn.pane.Markdown('*⏳ No answers submitted yet...*'))
             return
 
         participant_list = sorted(list(game_state['participants']))
 
         for q_idx, question in enumerate(game_state['questions']):
-            guesses_column.append(pn.pane.Markdown(f"### Question {q_idx+1}: {question}"))
+            guesses_column.append(pn.pane.Markdown(f"### 🎯 Question {q_idx+1}: {question}"))
+            guesses_column.append(pn.Spacer(height=16))
 
             answers_for_question = []
             for participant, answers in game_state['answers'].items():
@@ -233,12 +482,16 @@ def create_game_view():
                     })
 
             for a_idx, ans_data in enumerate(answers_for_question):
-                answer_text = pn.pane.Markdown(f"**Answer:** *{ans_data['answer']}*")
+                answer_text = pn.pane.Markdown(
+                    f"**💬 Answer:** *\"{ans_data['answer']}\"*",
+                    sizing_mode='stretch_width'
+                )
 
                 guess_select = pn.widgets.Select(
                     name=f'Who said this?',
                     options=['-- Select --'] + participant_list,
-                    value='-- Select --'
+                    value='-- Select --',
+                    width=300
                 )
 
                 guess_widgets[f'q{q_idx}_a{a_idx}'] = {
@@ -246,22 +499,24 @@ def create_game_view():
                     'correct_answer': ans_data['participant']
                 }
 
-                guesses_column.append(pn.Column(answer_text, guess_select))
+                guesses_column.append(answer_text)
+                guesses_column.append(guess_select)
+                guesses_column.append(pn.Spacer(height=24))
 
             guesses_column.append(pn.layout.Divider())
 
     def submit_guesses(event):
         if not guesser_name_input.value.strip():
-            pn.state.notifications.error('Please enter your name!', duration=3000)
+            pn.state.notifications.error('❌ Please enter your name!', duration=3000)
             return
 
         if not guess_widgets:
-            pn.state.notifications.error('No guesses available!', duration=3000)
+            pn.state.notifications.error('❌ No guesses available!', duration=3000)
             return
 
         for key, data in guess_widgets.items():
             if data['widget'].value == '-- Select --':
-                pn.state.notifications.error('Please make all your guesses!', duration=3000)
+                pn.state.notifications.error('❌ Please make all your guesses!', duration=3000)
                 return
 
         guesser_name = guesser_name_input.value.strip()
@@ -275,15 +530,15 @@ def create_game_view():
                 'correct': data['correct_answer']
             }
 
-        pn.state.notifications.success(f'Thanks {guesser_name}! Your guesses have been submitted.', duration=5000)
+        pn.state.notifications.success(f'🎉 Thanks {guesser_name}! Your guesses have been submitted.', duration=5000)
         guesser_name_input.value = ''
         for data in guess_widgets.values():
             data['widget'].value = '-- Select --'
 
-    submit_guess_btn = pn.widgets.Button(name='Submit Guesses', button_type='primary', width=150)
+    submit_guess_btn = pn.widgets.Button(name='✅ Submit Guesses', button_type='primary', width=200)
     submit_guess_btn.on_click(submit_guesses)
 
-    refresh_btn = pn.widgets.Button(name='Refresh Game', button_type='default', width=150)
+    refresh_btn = pn.widgets.Button(name='🔄 Refresh Game', button_type='default', width=200)
     refresh_btn.on_click(update_game_form)
 
     update_game_form()
@@ -291,17 +546,22 @@ def create_game_view():
     return pn.Column(
         title,
         instructions,
+        pn.Spacer(height=24),
         guesser_name_input,
+        pn.Spacer(height=16),
         refresh_btn,
+        pn.Spacer(height=24),
         guesses_column,
+        pn.Spacer(height=24),
         submit_guess_btn,
-        sizing_mode='stretch_width'
+        sizing_mode='stretch_width',
+        css_classes=['card']
     )
 
 
 def create_results_view():
     """Results view showing scores and correct answers"""
-    title = pn.pane.Markdown("# 🎉 CondaCarol - Results! 🏆", sizing_mode='stretch_width')
+    title = pn.pane.Markdown("# 🎉 CondaCarol - Results!", sizing_mode='stretch_width')
 
     results_column = pn.Column(sizing_mode='stretch_width')
 
@@ -309,7 +569,7 @@ def create_results_view():
         results_column.clear()
 
         if not game_state['guesses']:
-            results_column.append(pn.pane.Markdown('*No guesses to show yet...*'))
+            results_column.append(pn.pane.Markdown('*⏳ No guesses to show yet...*'))
             return
 
         scores = {}
@@ -331,61 +591,83 @@ def create_results_view():
 
         leaderboard_md = "## 🏆 Leaderboard\n\n"
         for i, (name, score_data) in enumerate(sorted_scores, 1):
-            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-            leaderboard_md += f"{medal} **{name}**: {score_data['correct']}/{score_data['total']} correct ({score_data['percentage']}%)\n"
+            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"**{i}.**"
+            leaderboard_md += f"{medal} **{name}**: {score_data['correct']}/{score_data['total']} correct ({score_data['percentage']}%)\n\n"
 
         results_column.append(pn.pane.Markdown(leaderboard_md))
         results_column.append(pn.layout.Divider())
 
         results_column.append(pn.pane.Markdown("## 🎁 All Answers Revealed"))
+        results_column.append(pn.Spacer(height=16))
 
         for q_idx, question in enumerate(game_state['questions']):
             results_column.append(pn.pane.Markdown(f"### Question {q_idx+1}: {question}"))
 
             for participant, answers in sorted(game_state['answers'].items()):
                 if q_idx in answers:
-                    results_column.append(pn.pane.Markdown(f"- **{participant}**: *{answers[q_idx]}*"))
+                    results_column.append(pn.pane.Markdown(f"- **{participant}**: *\"{answers[q_idx]}\"*"))
 
-            results_column.append(pn.layout.Divider())
+            results_column.append(pn.Spacer(height=24))
 
-    refresh_btn = pn.widgets.Button(name='Refresh Results', button_type='default', width=150)
+    refresh_btn = pn.widgets.Button(name='🔄 Refresh Results', button_type='default', width=200)
     refresh_btn.on_click(update_results)
 
     update_results()
 
     return pn.Column(
         title,
-        results_column,
+        pn.Spacer(height=24),
         refresh_btn,
-        sizing_mode='stretch_width'
+        pn.Spacer(height=24),
+        results_column,
+        sizing_mode='stretch_width',
+        css_classes=['card']
     )
 
 
 # Create the main app layout
 def create_app():
-    header = pn.pane.Markdown("# 🐍 CondaCarol - Christmas Party Game 🎄", sizing_mode='stretch_width')
+    header = pn.pane.Markdown(
+        "# 🐍 CondaCarol - Christmas Party Game 🎄",
+        sizing_mode='stretch_width',
+        styles={'text-align': 'center', 'font-size': '36px', 'margin-bottom': '16px'}
+    )
 
     phase_info = pn.pane.Markdown(
-        f"**Current Phase**: {game_state['phase'].title()} | "
-        f"**Participants**: {len(game_state['participants'])} | "
-        f"**Questions**: {len(game_state['questions'])}",
-        sizing_mode='stretch_width'
+        f"**Current Phase:** `{game_state['phase'].title()}` | "
+        f"**👥 Participants:** `{len(game_state['participants'])}` | "
+        f"**❓ Questions:** `{len(game_state['questions'])}`",
+        sizing_mode='stretch_width',
+        styles={'text-align': 'center', 'margin-bottom': '24px'},
+        css_classes=['phase-indicator']
+    )
+
+    password_note = pn.pane.Markdown(
+        "**🔑 Admin Password:** `condaclaus2024`",
+        sizing_mode='stretch_width',
+        styles={'text-align': 'center', 'color': '#8B92A7', 'font-size': '14px'}
     )
 
     tabs = pn.Tabs(
         ('🎅 Setup', create_setup_view()),
-        ('🎁 Answer Questions', create_answer_view()),
-        ('🎮 Play Game', create_game_view()),
+        ('🎁 Answer', create_answer_view()),
+        ('🎮 Play', create_game_view()),
         ('🏆 Results', create_results_view()),
-        sizing_mode='stretch_width'
+        sizing_mode='stretch_width',
+        margin=(24, 0)
     )
 
     return pn.Column(
+        pn.Spacer(height=24),
         header,
+        password_note,
+        pn.Spacer(height=24),
         phase_info,
-        pn.layout.Divider(),
         tabs,
-        sizing_mode='stretch_width'
+        pn.Spacer(height=48),
+        sizing_mode='stretch_width',
+        max_width=1200,
+        styles={'margin': '0 auto'}
     )
 
 
