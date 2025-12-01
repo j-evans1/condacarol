@@ -99,8 +99,8 @@ body {
   border-radius: var(--radius-sm) !important;
 }
 
-/* Input fields */
-.bk-input, .bk-input-group input, textarea {
+/* Input fields - Comprehensive coverage */
+input, textarea, select, .bk-input, .bk-input-group input {
   background: var(--color-surface-variant) !important;
   border: 1px solid var(--color-border) !important;
   color: var(--color-text) !important;
@@ -109,23 +109,58 @@ body {
   transition: all var(--transition-fast) !important;
 }
 
-.bk-input:focus, textarea:focus {
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-muted) !important;
+  opacity: 0.6 !important;
+}
+
+input:focus, textarea:focus, select:focus, .bk-input:focus {
   border-color: var(--color-primary) !important;
   outline: none !important;
   box-shadow: 0 0 0 2px rgba(67, 176, 42, 0.1) !important;
 }
 
-/* Select dropdowns */
-select.bk-input {
+/* Password inputs */
+input[type="password"] {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-text) !important;
+}
+
+/* Text inputs */
+input[type="text"] {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-text) !important;
+}
+
+/* TextArea */
+textarea, .bk-input-group textarea {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-text) !important;
+  font-family: 'Inter Variable', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Select dropdowns - Multiple selectors for coverage */
+select, select.bk-input, .bk-input-group select {
   background: var(--color-surface-variant) !important;
   border: 1px solid var(--color-border) !important;
   color: var(--color-text) !important;
   border-radius: var(--radius-sm) !important;
+  padding: 12px !important;
 }
 
-select.bk-input option {
+/* Dropdown options */
+select option, select.bk-input option {
   background: var(--color-surface-variant) !important;
   color: var(--color-text) !important;
+  padding: 8px !important;
+}
+
+/* Disabled inputs */
+input:disabled, textarea:disabled, select:disabled, .bk-input:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-muted) !important;
 }
 
 /* Radio buttons and RadioButtonGroup */
@@ -178,11 +213,54 @@ input[type="radio"] {
   margin-bottom: 24px !important;
 }
 
-/* Labels */
-label, .bk-label {
+/* Labels - Comprehensive */
+label, .bk-label, .bk-input-label, legend {
   color: var(--color-text) !important;
   font-weight: 500 !important;
   margin-bottom: 8px !important;
+  background: transparent !important;
+}
+
+/* Widget containers */
+.bk-input-group, .bk-widget-form-group {
+  background: transparent !important;
+}
+
+/* Panel panes */
+.bk-panel-models-markup-HTML, .bk-panel-models-markup-Markdown {
+  background: transparent !important;
+  color: var(--color-text) !important;
+}
+
+/* Ensure all text is visible - More specific */
+.bk p, .bk span, .bk div, .bk-root p, .bk-root span, .bk-root div {
+  color: var(--color-text) !important;
+}
+
+/* Force all bokeh elements to have proper text color */
+.bk, .bk-root, .bk * {
+  color: var(--color-text);
+}
+
+/* Input widget specific fixes */
+.bk-input-container input,
+.bk-input-container textarea,
+.bk-input-container select {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+/* Widget labels inside forms */
+.bk-input-group label,
+.bk-input-container label {
+  color: var(--color-text) !important;
+  background: transparent !important;
+}
+
+/* Widget boxes */
+.bk-widget-box {
+  background: transparent !important;
 }
 
 /* Tabs */
