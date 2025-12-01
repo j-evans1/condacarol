@@ -1,5 +1,5 @@
 """
-Database module for CondaCarol
+Database module for AnacondaClaus
 Handles PostgreSQL persistence with fallback to in-memory storage
 """
 

@@ -1,5 +1,5 @@
 """
-CondaCarol - A Christmas Party Guessing Game
+AnacondaClaus - A Christmas Party Guessing Game
 Learn more about your colleagues through fun questions and guessing games!
 """
 
@@ -390,7 +390,7 @@ USE_DATABASE = db.init_database() is not None
 # Only used if database is not available (local development)
 game_state = {
     'cities': {},  # {city_name: {questions, answers, guesses, participants, phase}}
-    'admin_password': 'condaclaus2024'
+    'admin_password': 'anacondaclaus2024'
 }
 
 # Data access layer - abstracts database and in-memory storage
@@ -543,7 +543,7 @@ if 'user_session' not in pn.state.cache:
 def create_login_view():
     """Login screen for all users (participants and admin)"""
     title = pn.pane.Markdown(
-        "# 🎄 Welcome to CondaCarol! 🐍",
+        "# 🎄 Welcome to AnacondaClaus! 🐍",
         sizing_mode='stretch_width',
         styles={'text-align': 'center'}
     )
@@ -1134,7 +1134,7 @@ def create_results_view():
     """Results view showing scores and correct answers"""
     city = pn.state.cache['user_session']['city']
     city_data = get_city_data(city)
-    title = pn.pane.Markdown("# 🎉 CondaCarol - Results!", sizing_mode='stretch_width')
+    title = pn.pane.Markdown("# 🎉 AnacondaClaus - Results!", sizing_mode='stretch_width')
 
     results_column = pn.Column(sizing_mode='stretch_width')
 
@@ -1211,7 +1211,7 @@ def create_app():
     is_admin = session['is_admin']
 
     header = pn.pane.Markdown(
-        "# 🐍 CondaCarol - Christmas Party Game 🎄",
+        "# 🐍 AnacondaClaus - Christmas Party Game 🎄",
         sizing_mode='stretch_width',
         styles={'text-align': 'center', 'font-size': '36px', 'margin-bottom': '16px'}
     )

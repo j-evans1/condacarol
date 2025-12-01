@@ -1,10 +1,10 @@
-# 🎄 CondaCarol - Christmas Party Guessing Game 🐍
+# 🎄 AnacondaClaus - Christmas Party Guessing Game 🐍
 
 A festive web app for your company Christmas party! Learn more about your colleagues through fun questions and guessing games.
 
-## 🎁 What is CondaCarol?
+## 🎁 What is AnacondaClaus?
 
-CondaCarol is an interactive party game where:
+AnacondaClaus is an interactive party game where:
 1. **Admin sets up** interesting questions
 2. **Participants answer** questions anonymously
 3. **Everyone plays** by guessing who said what
@@ -22,7 +22,7 @@ Perfect for team building, holiday parties, and getting to know your coworkers b
 1. **Clone this repository**
 ```bash
 git clone <your-repo-url>
-cd condacarol
+cd anacondaclaus
 ```
 
 2. **Create the conda environment**
@@ -32,7 +32,7 @@ conda env create -f environment.yaml
 
 3. **Activate the environment**
 ```bash
-conda activate condacarol
+conda activate anacondaclaus
 ```
 
 4. **Run the app**
@@ -46,7 +46,7 @@ The app will open in your browser at `http://localhost:5006`
 
 ### Phase 1: Setup (Admin)
 1. Navigate to the **Setup** tab
-2. Enter admin password: `condaclaus2024`
+2. Enter admin password: `anacondaclaus2024`
 3. Add 3+ questions (fun, personal questions work best!)
 4. Click "Start Answer Phase" when ready
 
@@ -78,7 +78,7 @@ Example questions:
 
 ## 🔒 Admin Password
 
-Default: `condaclaus2024`
+Default: `anacondaclaus2024`
 
 To change it, edit line 21 in `app.py`:
 ```python
@@ -137,7 +137,7 @@ The app uses Panel's Material design. To customize:
 
 ### Project Structure
 ```
-condacarol/
+anacondaclaus/
 ├── app.py              # Main Panel application
 ├── environment.yaml    # Conda dependencies
 ├── README.md          # This file
@@ -146,7 +146,7 @@ condacarol/
 
 ### Running in Development Mode
 ```bash
-conda activate condacarol
+conda activate anacondaclaus
 panel serve app.py --show --autoreload
 ```
 
@@ -155,7 +155,7 @@ The `--autoreload` flag automatically refreshes when you edit the code.
 ## 🐛 Troubleshooting
 
 **Issue**: "No module named panel"
-- **Solution**: Make sure you activated the conda environment: `conda activate condacarol`
+- **Solution**: Make sure you activated the conda environment: `conda activate anacondaclaus`
 
 **Issue**: "Address already in use"
 - **Solution**: Change the port: `panel serve app.py --port 5007`

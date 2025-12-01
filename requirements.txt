@@ -1,4 +1,4 @@
-# Python dependencies for CondaCarol
+# Python dependencies for AnacondaClaus
 # These match the environment.yaml for deployment platforms that prefer pip
 
 panel>=1.0.0

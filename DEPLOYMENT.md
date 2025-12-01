@@ -1,6 +1,6 @@
-# 🚀 Deployment Guide for CondaCarol
+# 🚀 Deployment Guide for AnacondaClaus
 
-This guide provides step-by-step instructions for deploying CondaCarol to various platforms.
+This guide provides step-by-step instructions for deploying AnacondaClaus to various platforms.
 
 ## 📋 Prerequisites
 
@@ -20,7 +20,7 @@ Railway provides free deployments with easy setup:
 2. **Create New Project**
    - Click "New Project"
    - Select "Deploy from GitHub repo"
-   - Choose `condacarol` repository
+   - Choose `anacondaclaus` repository
 
 3. **Configure**
    - Railway will auto-detect the app
@@ -51,7 +51,7 @@ Render is another great option with a generous free tier:
    - Connect your GitHub repository
 
 3. **Configure**
-   - **Name**: `condacarol`
+   - **Name**: `anacondaclaus`
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `panel serve app.py --address 0.0.0.0 --port $PORT --allow-websocket-origin="*"`
@@ -88,7 +88,7 @@ Classic platform-as-a-service:
 
 3. **Create App**
    ```bash
-   cd condacarol
+   cd anacondaclaus
    heroku create your-app-name
    ```
 
@@ -123,7 +123,7 @@ Perfect when everyone is on the same WiFi:
 
 2. **Start Server**
    ```bash
-   conda activate condacarol
+   conda activate anacondaclaus
    panel serve app.py --address 0.0.0.0 --port 5006 --allow-websocket-origin="*"
    ```
 
@@ -159,7 +159,7 @@ Official hosting for Panel apps:
 
 4. **Deploy**
    ```bash
-   cd condacarol
+   cd anacondaclaus
    panel cloud deploy app.py
    ```
 
@@ -181,7 +181,7 @@ Some platforms may require environment variables:
 ## 📱 Access Control
 
 The app uses a simple password for admin functions:
-- Default password: `condaclaus2024`
+- Default password: `anacondaclaus2024`
 - To change: Edit `app.py` line 21
 
 For production use, consider:

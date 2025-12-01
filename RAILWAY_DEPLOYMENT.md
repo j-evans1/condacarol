@@ -1,12 +1,12 @@
-# 🚂 Railway Deployment Guide for CondaCarol
+# 🚂 Railway Deployment Guide for AnacondaClaus
 
-Complete step-by-step guide to deploy CondaCarol to Railway with PostgreSQL database.
+Complete step-by-step guide to deploy AnacondaClaus to Railway with PostgreSQL database.
 
 ---
 
 ## 📋 Prerequisites
 
-- GitHub account with condacarol repository
+- GitHub account with anacondaclaus repository
 - All code pushed to GitHub
 
 ---
@@ -24,7 +24,7 @@ Complete step-by-step guide to deploy CondaCarol to Railway with PostgreSQL data
 
 1. Click "New Project" on Railway dashboard
 2. Select "Deploy from GitHub repo"
-3. Find and select `condacarol` repository
+3. Find and select `anacondaclaus` repository
 4. Railway will start creating your project
 
 ### **Step 3: Add PostgreSQL Database**
@@ -67,7 +67,7 @@ Your app is already configured via `railway.json`, but verify:
 2. Go to "Settings" tab
 3. Scroll to "Networking" section
 4. Click "Generate Domain"
-5. Railway will provide a public URL like: `condacarol.up.railway.app`
+5. Railway will provide a public URL like: `anacondaclaus.up.railway.app`
 
 ### **Step 7: Deploy!**
 
@@ -79,10 +79,10 @@ Your app is already configured via `railway.json`, but verify:
 ### **Step 8: Test Your Deployment**
 
 1. Click the generated domain URL
-2. You should see the CondaCarol login screen
+2. You should see the AnacondaClaus login screen
 3. Test admin login:
    - Enter admin name
-   - Password: `condaclaus2024`
+   - Password: `anacondaclaus2024`
    - Create a test city (e.g., "Test City")
 4. Open an incognito window and test participant login
 5. Select your test city and join
@@ -94,7 +94,7 @@ Your app is already configured via `railway.json`, but verify:
 ```
 Users (Browsers)
      ↓
-Railway Domain (condacarol.up.railway.app)
+Railway Domain (anacondaclaus.up.railway.app)
      ↓
 Panel Web App (Your Python app)
      ↓
@@ -325,17 +325,17 @@ Only needed if:
 
 ### **Admin Password**
 
-Default password: `condaclaus2024`
+Default password: `anacondaclaus2024`
 
 **To change:**
 1. Edit `app.py` line 393
-2. Change `'admin_password': 'condaclaus2024'`
+2. Change `'admin_password': 'anacondaclaus2024'`
 3. Push to GitHub (auto-deploys)
 
 **Or use environment variable:**
 ```python
 # In app.py, change to:
-'admin_password': os.environ.get('ADMIN_PASSWORD', 'condaclaus2024')
+'admin_password': os.environ.get('ADMIN_PASSWORD', 'anacondaclaus2024')
 
 # Then in Railway:
 # Settings → Variables → Add Variable
@@ -414,7 +414,7 @@ git push
 
 ## 📱 Mobile Access
 
-CondaCarol works perfectly on mobile devices!
+AnacondaClaus works perfectly on mobile devices!
 
 **Testing:**
 1. Open deployment URL on phone
@@ -450,7 +450,7 @@ Your deployment is successful when:
 - Railway Documentation: https://docs.railway.app
 - Railway Discord: https://discord.gg/railway
 
-**CondaCarol Issues:**
+**AnacondaClaus Issues:**
 - Check GitHub issues
 - Review deployment logs
 - Verify database connection
@@ -459,7 +459,7 @@ Your deployment is successful when:
 
 ## 🎊 You're Ready!
 
-Your CondaCarol app is now:
+Your AnacondaClaus app is now:
 - ✅ Deployed to Railway
 - ✅ Connected to PostgreSQL database
 - ✅ Accessible via public URL

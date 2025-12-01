@@ -1,4 +1,4 @@
-# UI Test Checklist - CondaCarol
+# UI Test Checklist - AnacondaClaus
 
 ## Purpose
 Ensure NO white-on-white text issues exist in any view or widget.
