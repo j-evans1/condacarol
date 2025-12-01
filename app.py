@@ -392,6 +392,143 @@ game_state = {
     'admin_password': 'condaclaus2024'
 }
 
+# Session state to track logged-in user (per browser session)
+if 'user_session' not in pn.state.cache:
+    pn.state.cache['user_session'] = {
+        'username': None,
+        'is_admin': False,
+        'logged_in': False
+    }
+
+
+def create_login_view():
+    """Login screen for all users (participants and admin)"""
+    title = pn.pane.Markdown(
+        "# 🎄 Welcome to CondaCarol! 🐍",
+        sizing_mode='stretch_width',
+        styles={'text-align': 'center'}
+    )
+
+    subtitle = pn.pane.Markdown(
+        """
+        **A Christmas Party Guessing Game**
+
+        Learn more about your colleagues through fun questions and guess who said what!
+        """,
+        sizing_mode='stretch_width',
+        styles={'text-align': 'center', 'color': '#8B92A7'}
+    )
+
+    # Participant login section
+    participant_section = pn.Column(sizing_mode='stretch_width')
+    participant_section.append(pn.pane.Markdown("## 🎁 Join as Participant", sizing_mode='stretch_width'))
+
+    name_input = pn.widgets.TextInput(
+        name='',
+        placeholder='Enter your name',
+        width=400
+    )
+
+    name_label = pn.pane.Markdown("**Your Name:**", sizing_mode='stretch_width')
+
+    def participant_login(event):
+        username = name_input.value.strip()
+        if not username:
+            pn.state.notifications.error('❌ Please enter your name!', duration=3000)
+            return
+
+        pn.state.cache['user_session'] = {
+            'username': username,
+            'is_admin': False,
+            'logged_in': True
+        }
+        pn.state.notifications.success(f'🎉 Welcome, {username}!', duration=3000)
+        # Force a refresh to show the main app
+        pn.state.location.reload = True
+
+    participant_btn = pn.widgets.Button(
+        name='🎮 Join Game',
+        button_type='primary',
+        width=200
+    )
+    participant_btn.on_click(participant_login)
+
+    participant_section.append(name_label)
+    participant_section.append(name_input)
+    participant_section.append(pn.Spacer(height=16))
+    participant_section.append(participant_btn)
+
+    # Admin login section
+    admin_section = pn.Column(sizing_mode='stretch_width')
+    admin_section.append(pn.layout.Divider())
+    admin_section.append(pn.Spacer(height=24))
+    admin_section.append(pn.pane.Markdown("## 🔑 Admin Login", sizing_mode='stretch_width'))
+
+    admin_name_input = pn.widgets.TextInput(
+        name='',
+        placeholder='Admin name',
+        width=400
+    )
+
+    admin_password_input = pn.widgets.PasswordInput(
+        name='',
+        placeholder='Admin password',
+        width=400
+    )
+
+    admin_name_label = pn.pane.Markdown("**Admin Name:**", sizing_mode='stretch_width')
+    admin_password_label = pn.pane.Markdown("**Password:**", sizing_mode='stretch_width')
+
+    def admin_login(event):
+        username = admin_name_input.value.strip()
+        password = admin_password_input.value
+
+        if not username:
+            pn.state.notifications.error('❌ Please enter your name!', duration=3000)
+            return
+
+        if password != game_state['admin_password']:
+            pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
+            return
+
+        pn.state.cache['user_session'] = {
+            'username': username,
+            'is_admin': True,
+            'logged_in': True
+        }
+        pn.state.notifications.success(f'🎉 Welcome Admin {username}!', duration=3000)
+        # Force a refresh to show the main app
+        pn.state.location.reload = True
+
+    admin_btn = pn.widgets.Button(
+        name='🔐 Login as Admin',
+        button_type='success',
+        width=200
+    )
+    admin_btn.on_click(admin_login)
+
+    admin_section.append(admin_name_label)
+    admin_section.append(admin_name_input)
+    admin_section.append(pn.Spacer(height=12))
+    admin_section.append(admin_password_label)
+    admin_section.append(admin_password_input)
+    admin_section.append(pn.Spacer(height=16))
+    admin_section.append(admin_btn)
+
+    return pn.Column(
+        pn.Spacer(height=48),
+        title,
+        subtitle,
+        pn.Spacer(height=48),
+        participant_section,
+        admin_section,
+        pn.Spacer(height=48),
+        sizing_mode='stretch_width',
+        max_width=600,
+        styles={'margin': '0 auto'},
+        css_classes=['card']
+    )
+
 
 def create_setup_view():
     """Admin view to set up questions"""
@@ -405,12 +542,6 @@ def create_setup_view():
     - If you could have dinner with anyone, who would it be?
     - What's your hidden talent?
     """, sizing_mode='stretch_width')
-
-    password_input = pn.widgets.PasswordInput(
-        name='Admin Password',
-        placeholder='Enter admin password',
-        width=300
-    )
 
     question_input = pn.widgets.TextAreaInput(
         name='New Question',
@@ -437,10 +568,6 @@ def create_setup_view():
         questions_list.value = questions_text
 
     def add_question(event):
-        if password_input.value != game_state['admin_password']:
-            pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
-            return
-
         if question_input.value.strip():
             game_state['questions'].append(question_input.value.strip())
             pn.state.notifications.success(f'✅ Question added! Total: {len(game_state["questions"])}', duration=3000)
@@ -450,20 +577,12 @@ def create_setup_view():
             pn.state.notifications.warning('⚠️ Please enter a question.', duration=3000)
 
     def clear_questions(event):
-        if password_input.value != game_state['admin_password']:
-            pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
-            return
-
         game_state['questions'] = []
         game_state['answers'] = {}
         pn.state.notifications.info('🗑️ All questions cleared!', duration=3000)
         update_questions_display()
 
     def start_answer_phase(event):
-        if password_input.value != game_state['admin_password']:
-            pn.state.notifications.error('❌ Incorrect admin password!', duration=3000)
-            return
-
         if len(game_state['questions']) < 3:
             pn.state.notifications.error('❌ Please add at least 3 questions!', duration=3000)
             return
@@ -487,8 +606,6 @@ def create_setup_view():
         title,
         instructions,
         pn.Spacer(height=24),
-        password_input,
-        pn.Spacer(height=16),
         question_input,
         pn.Spacer(height=16),
         pn.Row(add_btn, pn.Spacer(width=16), clear_btn),
@@ -503,19 +620,15 @@ def create_setup_view():
 
 def create_answer_view():
     """Participant view to answer questions"""
-    title = pn.pane.Markdown("# 🎁 CondaCarol - Answer Questions", sizing_mode='stretch_width')
+    username = pn.state.cache['user_session']['username']
+
+    title = pn.pane.Markdown(f"# 🎁 {username}'s Answers", sizing_mode='stretch_width')
     instructions = pn.pane.Markdown("""
     **Answer the questions below**. Your answers will be shared anonymously during the guessing game!
     Be creative and have fun with your responses!
 
     **💡 Tip:** If questions don't appear, click the "Refresh Questions" button below.
     """, sizing_mode='stretch_width')
-
-    name_input = pn.widgets.TextInput(
-        name='Your Name',
-        placeholder='Enter your name',
-        width=300
-    )
 
     status_message = pn.pane.Markdown(
         "",
@@ -558,11 +671,7 @@ def create_answer_view():
             answers_column.append(pn.Spacer(height=8))
 
     def submit_answers(event):
-        if not name_input.value.strip():
-            pn.state.notifications.error('❌ Please enter your name!', duration=3000)
-            return
-
-        participant_name = name_input.value.strip()
+        participant_name = username
 
         if participant_name in game_state['answers']:
             pn.state.notifications.warning('⚠️ You have already submitted answers!', duration=3000)
@@ -583,7 +692,7 @@ def create_answer_view():
         game_state['participants'].add(participant_name)
         pn.state.notifications.success(f'🎉 Thanks {participant_name}! Your answers have been submitted.', duration=5000)
 
-        name_input.value = ''
+        # Clear answers for re-submission if needed
         for widget in answer_widgets:
             widget.value = ''
 
@@ -609,8 +718,6 @@ def create_answer_view():
         pn.Spacer(height=16),
         status_message,
         pn.Spacer(height=24),
-        name_input,
-        pn.Spacer(height=16),
         answers_column,
         pn.Spacer(height=24),
         submit_btn,
@@ -623,19 +730,15 @@ def create_answer_view():
 
 def create_game_view():
     """Game view where participants guess who said what"""
-    title = pn.pane.Markdown("# 🎅 CondaCarol - Guess Who!", sizing_mode='stretch_width')
+    username = pn.state.cache['user_session']['username']
+
+    title = pn.pane.Markdown(f"# 🎅 {username}'s Guesses", sizing_mode='stretch_width')
     instructions = pn.pane.Markdown("""
     **Match each answer to the person who said it!**
     Each person can only be matched once per question.
 
     **💡 Tip:** Click "Refresh Game" button below to load the latest answers.
     """, sizing_mode='stretch_width')
-
-    guesser_name_input = pn.widgets.TextInput(
-        name='Your Name',
-        placeholder='Enter your name to start guessing',
-        width=300
-    )
 
     guesses_column = pn.Column(sizing_mode='stretch_width')
     # Store widgets per question to prevent clearing issues
@@ -749,9 +852,7 @@ def create_game_view():
         return True, ""
 
     def submit_guesses(event):
-        if not guesser_name_input.value.strip():
-            pn.state.notifications.error('❌ Please enter your name!', duration=3000)
-            return
+        guesser_name = username
 
         if not all_guess_widgets:
             pn.state.notifications.error('❌ No guesses available! Click Refresh Game first.', duration=3000)
@@ -762,8 +863,6 @@ def create_game_view():
         if not valid:
             pn.state.notifications.error(error_msg, duration=4000)
             return
-
-        guesser_name = guesser_name_input.value.strip()
 
         # Store guesses
         if guesser_name not in game_state['guesses']:
@@ -777,8 +876,7 @@ def create_game_view():
 
         pn.state.notifications.success(f'🎉 Thanks {guesser_name}! Your guesses have been submitted.', duration=5000)
 
-        # Clear form
-        guesser_name_input.value = ''
+        # Clear form for re-submission if needed
         for data in all_guess_widgets.values():
             data['widget'].value = None
 
@@ -798,8 +896,6 @@ def create_game_view():
         pn.pane.Markdown("**👇 Click this button first to load answers:**", sizing_mode='stretch_width'),
         refresh_btn,
         pn.Spacer(height=24),
-        guesser_name_input,
-        pn.Spacer(height=16),
         guesses_column,
         pn.Spacer(height=24),
         submit_guess_btn,
@@ -876,10 +972,48 @@ def create_results_view():
 
 # Create the main app layout
 def create_app():
+    session = pn.state.cache['user_session']
+
+    # If not logged in, show login screen
+    if not session['logged_in']:
+        return create_login_view()
+
+    # User is logged in - show main app
+    username = session['username']
+    is_admin = session['is_admin']
+
     header = pn.pane.Markdown(
         "# 🐍 CondaCarol - Christmas Party Game 🎄",
         sizing_mode='stretch_width',
         styles={'text-align': 'center', 'font-size': '36px', 'margin-bottom': '16px'}
+    )
+
+    # User info and logout
+    def logout(event):
+        pn.state.cache['user_session'] = {
+            'username': None,
+            'is_admin': False,
+            'logged_in': False
+        }
+        pn.state.notifications.info('👋 Logged out successfully!', duration=3000)
+        pn.state.location.reload = True
+
+    logout_btn = pn.widgets.Button(
+        name='🚪 Logout',
+        button_type='warning',
+        width=120
+    )
+    logout_btn.on_click(logout)
+
+    role_badge = "🔑 Admin" if is_admin else "🎮 Participant"
+    user_info = pn.Row(
+        pn.pane.Markdown(
+            f"**{role_badge}** Logged in as: **{username}**",
+            sizing_mode='stretch_width',
+            styles={'text-align': 'center'}
+        ),
+        logout_btn,
+        sizing_mode='stretch_width'
     )
 
     phase_info = pn.pane.Markdown(
@@ -891,25 +1025,30 @@ def create_app():
         css_classes=['phase-indicator']
     )
 
-    password_note = pn.pane.Markdown(
-        "**🔑 Admin Password:** `condaclaus2024`",
-        sizing_mode='stretch_width',
-        styles={'text-align': 'center', 'color': '#8B92A7', 'font-size': '14px'}
-    )
-
-    tabs = pn.Tabs(
-        ('🎅 Setup', create_setup_view()),
-        ('🎁 Answer', create_answer_view()),
-        ('🎮 Play', create_game_view()),
-        ('🏆 Results', create_results_view()),
-        sizing_mode='stretch_width',
-        margin=(24, 0)
-    )
+    # Show different tabs based on role
+    if is_admin:
+        tabs = pn.Tabs(
+            ('🎅 Setup', create_setup_view()),
+            ('🎁 Answer', create_answer_view()),
+            ('🎮 Play', create_game_view()),
+            ('🏆 Results', create_results_view()),
+            sizing_mode='stretch_width',
+            margin=(24, 0)
+        )
+    else:
+        # Participants only see Answer, Play, and Results tabs
+        tabs = pn.Tabs(
+            ('🎁 Answer', create_answer_view()),
+            ('🎮 Play', create_game_view()),
+            ('🏆 Results', create_results_view()),
+            sizing_mode='stretch_width',
+            margin=(24, 0)
+        )
 
     return pn.Column(
         pn.Spacer(height=24),
         header,
-        password_note,
+        user_info,
         pn.Spacer(height=24),
         phase_info,
         tabs,
