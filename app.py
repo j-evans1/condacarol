@@ -123,6 +123,61 @@ select.bk-input {
   border-radius: var(--radius-sm) !important;
 }
 
+select.bk-input option {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-text) !important;
+}
+
+/* Radio buttons and RadioButtonGroup */
+input[type="radio"] {
+  accent-color: var(--color-primary) !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin-right: 8px !important;
+}
+
+.bk-btn-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.bk-btn-group .bk-btn {
+  background: var(--color-surface-variant) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  text-align: left !important;
+  padding: 12px 16px !important;
+  border-radius: var(--radius-sm) !important;
+  transition: all var(--transition-fast) !important;
+  font-weight: 400 !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+.bk-btn-group .bk-btn:hover {
+  border-color: var(--color-primary) !important;
+  background: rgba(67, 176, 42, 0.08) !important;
+  transform: translateX(4px) !important;
+}
+
+.bk-btn-group .bk-btn.bk-active {
+  background: rgba(67, 176, 42, 0.15) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-text) !important;
+  font-weight: 500 !important;
+  box-shadow: 0 0 0 2px rgba(67, 176, 42, 0.2) !important;
+}
+
+.answer-card {
+  background: var(--color-surface-variant) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 20px !important;
+  margin-bottom: 24px !important;
+}
+
 /* Labels */
 label, .bk-label {
   color: var(--color-text) !important;
@@ -446,8 +501,8 @@ def create_game_view():
     """Game view where participants guess who said what"""
     title = pn.pane.Markdown("# 🎅 CondaCarol - Guess Who!", sizing_mode='stretch_width')
     instructions = pn.pane.Markdown("""
-    **Read each answer and guess who wrote it!**
-    Each correct guess earns you a point. Good luck!
+    **Match each answer to the person who said it!**
+    Drag and drop or use the dropdowns to match. Each person can only be matched once per question.
     """, sizing_mode='stretch_width')
 
     guesser_name_input = pn.widgets.TextInput(
@@ -457,90 +512,151 @@ def create_game_view():
     )
 
     guesses_column = pn.Column(sizing_mode='stretch_width')
-    guess_widgets = {}
+    # Store widgets per question to prevent clearing issues
+    all_guess_widgets = {}
+
+    def create_question_section(q_idx, question):
+        """Create a section for matching answers to participants for one question"""
+        section = pn.Column(sizing_mode='stretch_width')
+
+        section.append(pn.pane.Markdown(f"### 🎯 Question {q_idx+1}: {question}", sizing_mode='stretch_width'))
+        section.append(pn.Spacer(height=16))
+
+        # Get all answers for this question
+        answers_for_question = []
+        for participant, answers in game_state['answers'].items():
+            if q_idx in answers:
+                answers_for_question.append({
+                    'participant': participant,
+                    'answer': answers[q_idx]
+                })
+
+        if not answers_for_question:
+            section.append(pn.pane.Markdown('*No answers for this question*'))
+            return section
+
+        participant_list = sorted(list(game_state['participants']))
+
+        # Create matching interface for this question
+        instructions_md = pn.pane.Markdown(
+            f"**Match the {len(answers_for_question)} answers below to the participants:**",
+            sizing_mode='stretch_width'
+        )
+        section.append(instructions_md)
+        section.append(pn.Spacer(height=16))
+
+        # Create widgets for each answer
+        for a_idx, ans_data in enumerate(answers_for_question):
+            # Create card for each answer
+            answer_card = pn.Column(sizing_mode='stretch_width', css_classes=['answer-card'])
+
+            answer_text = pn.pane.Markdown(
+                f"**Answer {a_idx + 1}:** *\"{ans_data['answer']}\"*",
+                sizing_mode='stretch_width'
+            )
+
+            # Use RadioButtonGroup for better UX
+            guess_select = pn.widgets.RadioButtonGroup(
+                name='Who said this?',
+                options=participant_list,
+                button_type='default',
+                button_style='outline',
+                orientation='vertical',
+                width=400
+            )
+
+            key = f'q{q_idx}_a{a_idx}'
+            all_guess_widgets[key] = {
+                'widget': guess_select,
+                'correct_answer': ans_data['participant'],
+                'q_idx': q_idx
+            }
+
+            answer_card.append(answer_text)
+            answer_card.append(pn.Spacer(height=12))
+            answer_card.append(guess_select)
+
+            section.append(answer_card)
+            section.append(pn.Spacer(height=16))
+
+        return section
 
     def update_game_form(event=None):
         guesses_column.clear()
-        guess_widgets.clear()
+        all_guess_widgets.clear()
 
         if not game_state['answers']:
             guesses_column.append(pn.pane.Markdown('*⏳ No answers submitted yet...*'))
             return
 
-        participant_list = sorted(list(game_state['participants']))
-
+        # Create sections for each question
         for q_idx, question in enumerate(game_state['questions']):
-            guesses_column.append(pn.pane.Markdown(f"### 🎯 Question {q_idx+1}: {question}"))
-            guesses_column.append(pn.Spacer(height=16))
-
-            answers_for_question = []
-            for participant, answers in game_state['answers'].items():
-                if q_idx in answers:
-                    answers_for_question.append({
-                        'participant': participant,
-                        'answer': answers[q_idx]
-                    })
-
-            for a_idx, ans_data in enumerate(answers_for_question):
-                answer_text = pn.pane.Markdown(
-                    f"**💬 Answer:** *\"{ans_data['answer']}\"*",
-                    sizing_mode='stretch_width'
-                )
-
-                guess_select = pn.widgets.Select(
-                    name=f'Who said this?',
-                    options=['-- Select --'] + participant_list,
-                    value='-- Select --',
-                    width=300
-                )
-
-                guess_widgets[f'q{q_idx}_a{a_idx}'] = {
-                    'widget': guess_select,
-                    'correct_answer': ans_data['participant']
-                }
-
-                guesses_column.append(answer_text)
-                guesses_column.append(guess_select)
-                guesses_column.append(pn.Spacer(height=24))
-
+            section = create_question_section(q_idx, question)
+            guesses_column.append(section)
             guesses_column.append(pn.layout.Divider())
+
+    def validate_guesses():
+        """Check if all answers are matched and no duplicates per question"""
+        # Group by question
+        questions_guesses = {}
+        for key, data in all_guess_widgets.items():
+            q_idx = data['q_idx']
+            if q_idx not in questions_guesses:
+                questions_guesses[q_idx] = []
+
+            if data['widget'].value is None:
+                return False, f"❌ Please match all answers for Question {q_idx + 1}!"
+
+            questions_guesses[q_idx].append(data['widget'].value)
+
+        # Check for duplicates per question
+        for q_idx, guesses in questions_guesses.items():
+            if len(guesses) != len(set(guesses)):
+                return False, f"❌ You selected the same person twice for Question {q_idx + 1}! Each person can only be matched once per question."
+
+        return True, ""
 
     def submit_guesses(event):
         if not guesser_name_input.value.strip():
             pn.state.notifications.error('❌ Please enter your name!', duration=3000)
             return
 
-        if not guess_widgets:
-            pn.state.notifications.error('❌ No guesses available!', duration=3000)
+        if not all_guess_widgets:
+            pn.state.notifications.error('❌ No guesses available! Click Refresh Game first.', duration=3000)
             return
 
-        for key, data in guess_widgets.items():
-            if data['widget'].value == '-- Select --':
-                pn.state.notifications.error('❌ Please make all your guesses!', duration=3000)
-                return
+        # Validate all guesses
+        valid, error_msg = validate_guesses()
+        if not valid:
+            pn.state.notifications.error(error_msg, duration=4000)
+            return
 
         guesser_name = guesser_name_input.value.strip()
 
+        # Store guesses
         if guesser_name not in game_state['guesses']:
             game_state['guesses'][guesser_name] = {}
 
-        for key, data in guess_widgets.items():
+        for key, data in all_guess_widgets.items():
             game_state['guesses'][guesser_name][key] = {
                 'guessed': data['widget'].value,
                 'correct': data['correct_answer']
             }
 
         pn.state.notifications.success(f'🎉 Thanks {guesser_name}! Your guesses have been submitted.', duration=5000)
-        guesser_name_input.value = ''
-        for data in guess_widgets.values():
-            data['widget'].value = '-- Select --'
 
-    submit_guess_btn = pn.widgets.Button(name='✅ Submit Guesses', button_type='primary', width=200)
+        # Clear form
+        guesser_name_input.value = ''
+        for data in all_guess_widgets.values():
+            data['widget'].value = None
+
+    submit_guess_btn = pn.widgets.Button(name='✅ Submit All Guesses', button_type='primary', width=220)
     submit_guess_btn.on_click(submit_guesses)
 
     refresh_btn = pn.widgets.Button(name='🔄 Refresh Game', button_type='default', width=200)
     refresh_btn.on_click(update_game_form)
 
+    # Initial load
     update_game_form()
 
     return pn.Column(
